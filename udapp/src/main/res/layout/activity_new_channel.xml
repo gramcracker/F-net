@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:maxHeight="500dp"
+    android:layout_margin="32dp"
+    android:background="@drawable/dialog_bg"
+    android:orientation="vertical" >
+    <TextView
+        android:id="@+id/Dialogue_text_view"
+        style="@style/Dialog_Head"
+        android:padding="8dp"
+        android:text="New Channel"
+        android:textSize="20sp"
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:textColor="@color/white"
+        android:gravity="center_horizontal"/>
+
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:layout_margin="8dp"
+            android:padding="8dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <android.support.design.widget.TextInputLayout
+                    android:id="@+id/ChannelNameInput"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1">
+
+                    <android.support.design.widget.TextInputEditText
+                        android:id="@+id/channelNameEditText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Channel name"/>
+                </android.support.design.widget.TextInputLayout>
+
+                <Switch
+                    android:id="@+id/private_channel_switch"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textOff="public"
+                    android:textOn="private"
+                    />
+
+                <CheckBox
+                    android:id="@+id/checkBoxBluetooth"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Uses Bluetooth" />
+
+                <CheckBox
+                    android:id="@+id/checkBoxWifi"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Uses Wifi" />
+
+                <android.support.design.widget.TextInputLayout
+                    android:id="@+id/ChannelInfoInput"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1">
+
+                    <android.support.design.widget.TextInputEditText
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="About this channel"
+                        android:inputType="textMultiLine"
+                        android:ems="15"/>
+                </android.support.design.widget.TextInputLayout>
+
+                <Button
+                    android:id="@+id/broadcastButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:text="Broadcast"/>
+
+                <TextView
+                    android:id="@+id/advancedOptionsTextView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Advanced Options"
+                    android:clickable="true"
+                    android:layout_gravity="center_horizontal"/>
+
+            </LinearLayout>
+        </ScrollView>
+
+
+
+</LinearLayout>

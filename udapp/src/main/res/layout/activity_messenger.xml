@@ -1,16 +1,30 @@
-
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:background="@color/color_primary_dark">
 
-    <TextView
-        android:id="@+id/peersTextView"
-        android:layout_width="wrap_content"
+    <android.support.design.widget.AppBarLayout
+        android:id="@+id/messageViewAppBar"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="0 connected"
-        android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true" />
+        android:paddingTop="@dimen/appbar_padding_top"
+        android:theme="@style/AppTheme.AppBarOverlay">
+
+        <android.support.v7.widget.Toolbar
+            android:id="@+id/messageViewToolbar"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:layout_weight="1"
+            android:background="@color/color_primary"
+            app:subtitle="people:"
+            app:layout_scrollFlags="scroll|enterAlways"
+            app:popupTheme="@style/AppTheme.PopupOverlay"
+            >
+
+        </android.support.v7.widget.Toolbar>
+
+    </android.support.design.widget.AppBarLayout>
 
     <TextView
         android:id="@+id/tv_conversation_view"
@@ -19,9 +33,9 @@
         android:textColor="@color/abc_primary_text_material_dark"
         android:layout_width="match_parent"
         android:layout_height="fill_parent"
-        android:layout_below="@+id/peersTextView"
         android:layout_centerHorizontal="true"
-        android:freezesText="true"/>
+        android:freezesText="true"
+        android:layout_below="@+id/messageViewAppBar"/>
 
     <RelativeLayout
         android:layout_width="match_parent"
@@ -50,9 +64,10 @@
             android:id="@+id/sendButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_margin="6dp"
             android:layout_centerVertical="true"
             android:layout_alignParentRight="true"
-            android:background="@android:drawable/ic_menu_send"
+            android:background="@drawable/ic_send"
             android:onClick="send" />
     </RelativeLayout>
 </RelativeLayout>

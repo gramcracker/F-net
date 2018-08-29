@@ -6,8 +6,15 @@
 	      android:title="@string/action_settings"
 	      android:orderInCategory="100"
 	      app:showAsAction="never"/>
+
+	<item android:id="@+id/refresh"
+		android:title="refresh"/>
 	<item
-		android:id="@+id/exit"
-		android:title="exit"
+		android:id="@+id/stop"
+		android:title="stop"
+		/>
+	<item
+		android:id="@+id/start"
+		android:title="start"
 		/>
 </menu>
