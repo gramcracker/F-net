@@ -5,34 +5,81 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:id="@+id/list_card"
-    android:padding="5dp"
     android:clickable="true"
-    android:layout_margin="5dp"
-    android:focusable="true">
-
-    <RelativeLayout
+    android:layout_margin="1dp"
+    android:focusable="true"
+    >
+    <android.support.v7.widget.LinearLayoutCompat
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="10dp">
-
-
-        <TextView
-            android:id="@+id/list_card_title"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_toLeftOf="@+id/list_image_button"
-            android:layout_gravity="center_horizontal|center_vertical"
-            />
-
-        <ImageButton
-            android:id="@+id/list_image_button"
+        android:layout_height="match_parent"
+        android:background="@color/color_primary_dark">
+        <FrameLayout
+            android:background="@drawable/card_decoration"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:layout_alignParentRight="true"
-            android:background="@android:color/transparent"
-            app:srcCompat="@drawable/ic_add"/>
+            />
 
-    </RelativeLayout>
+        <RelativeLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:padding="10dp">
+
+
+
+            <TextView
+                android:id="@+id/list_card_title"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:textColor="@color/color_text_dark"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toLeftOf="@+id/list_image_button"
+                android:layout_toRightOf="@+id/listening_count"
+                android:layout_gravity="center_horizontal|center_vertical"
+                />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/color_text_primary"
+                android:textSize="15sp"
+                android:layout_below="@id/list_card_title"
+                android:layout_toRightOf="@+id/listening_count"
+                android:text="Poster:"/>
+            <FrameLayout
+                android:id="@+id/listening_count"
+                android:layout_alignParentLeft="true"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:paddingLeft="6dp"
+                android:padding="12dp"
+                android:foregroundGravity= "center_vertical">
+
+                <ImageView
+                    android:id="@+id/listening_count_image"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    app:srcCompat="@drawable/ic_user" />
+                <TextView
+                    android:layout_gravity="right|bottom"
+                    android:id="@+id/listening_count_number"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/color_accent_4"
+                    android:textSize="12sp"
+                    android:text="0"/>
+
+            </FrameLayout>
+
+            <ImageButton
+                android:id="@+id/list_image_button"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_alignParentRight="true"
+                android:layout_centerVertical="true"
+                android:background="@android:color/transparent"
+                app:srcCompat="@drawable/ic_add"/>
+
+        </RelativeLayout>
+    </android.support.v7.widget.LinearLayoutCompat>
+
 </android.support.v7.widget.CardView>

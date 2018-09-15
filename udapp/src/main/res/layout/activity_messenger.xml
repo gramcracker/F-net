@@ -17,7 +17,8 @@
             android:layout_height="60dp"
             android:layout_weight="1"
             android:background="@color/color_primary"
-            app:subtitle="people:"
+            app:subtitle="listening:"
+            app:subtitleTextColor="@color/color_text_primary"
             app:layout_scrollFlags="scroll|enterAlways"
             app:popupTheme="@style/AppTheme.PopupOverlay"
             >
@@ -25,23 +26,33 @@
         </android.support.v7.widget.Toolbar>
 
     </android.support.design.widget.AppBarLayout>
-
-    <TextView
-        android:id="@+id/tv_conversation_view"
-        android:scrollbars="vertical"
-        android:background="@color/color_primary_dark"
-        android:textColor="@color/abc_primary_text_material_dark"
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="fill_parent"
-        android:layout_centerHorizontal="true"
+        android:foregroundGravity="bottom"
+        android:fillViewport="true"
+        android:layout_above="@id/messageView"
+        android:layout_below="@id/messageViewAppBar"
+        >
+    <TextView
+        android:id="@+id/conversation_text_view"
+        android:scrollbars="vertical"
+        android:background="@color/color_primary_dark"
+        android:textColor="@color/color_text_dark"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:freezesText="true"
-        android:layout_below="@+id/messageViewAppBar"/>
+        android:gravity="bottom"
+        />
+    </ScrollView>
 
     <RelativeLayout
+        android:id="@+id/messageView"
         android:layout_width="match_parent"
         android:layout_height="60dp"
         android:layout_alignParentBottom="true"
-        android:background="@color/color_primary">
+        android:background="@color/color_primary"
+        android:nextFocusUp="@id/conversation_text_view">
 
         <android.support.design.widget.TextInputLayout
             android:drawableRight="@android:drawable/ic_menu_send"
@@ -58,7 +69,7 @@
                 android:layout_toLeftOf="@+id/sendButton"
                 android:inputType="textLongMessage|textMultiLine|textCapSentences"
                 android:hint="@string/hint"
-                android:textColor="@color/color_text_primary" />
+                android:textColor="@color/color_text_dark" />
         </android.support.design.widget.TextInputLayout>
         <ImageButton
             android:id="@+id/sendButton"

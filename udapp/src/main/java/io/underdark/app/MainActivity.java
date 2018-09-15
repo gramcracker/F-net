@@ -2,13 +2,10 @@ package io.underdark.app;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentPagerAdapter;
-import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -28,37 +25,38 @@ import android.support.v4.view.ViewPager;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import java.io.IOException;
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+
 import java.util.Vector;
 
+import io.underdark.app.model.Channel;
 import io.underdark.app.model.Node;
 
 
 public class MainActivity extends AppCompatActivity
 {
-    SharedPreferences preferences;
-	public static String appId = "DewDrop";
-	public static int appVersion = 1;
-	public static Node node;
-	public static boolean active = false;
+    public SharedPreferences preferences;
+	//public static Node node;
+	Intent nodeIntent;
+
 	private TextView peersTextView;
 	DrawerLayout mDrawerLayout;
-	BroadcastReceiver mMessageReceiver;
-
 
 	public tabPagerAdapter mSectionsPagerAdapter;
 	ViewPager mViewPager;
-	Context context = this;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
+		//create singleton node
 
-        preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        preferences = getSharedPreferences("MAIN_PREFERENCES", MODE_PRIVATE);
+        //start the node service
+
 		peersTextView = findViewById(R.id.peersTextView);
 		mDrawerLayout = findViewById(R.id.drawer_layout);
 
@@ -87,52 +85,18 @@ public class MainActivity extends AppCompatActivity
 		tabLayout.addOnTabSelectedListener(new TabLayout.ViewPagerOnTabSelectedListener(mViewPager));
 
 
-
-		//create singleton node
-		node = Node.getInstance(this);
-		if(node!=null){
-			//set up node from shared preferences
-		    node.username = preferences.getString("user_name","null");
-        }
-
-
-        //request list of broadcasting channels from every connected link
-		try {
-			node.requestChannelLists();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		// Register to receive messages.
-		// We are registering an observer (mMessageReceiver) to receive Intents
-		// with actions named "custom-event-name".
-
-		LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver,
-				new IntentFilter("mesh_irc_transmission"));
+        nodeIntent = new Intent(this, Node.class);
+        startService(nodeIntent);
 
 	}
 
 
 
 
-	@Override
-	protected void onStart()
-	{
-		super.onStart();
-		this.active = true;
-		node.start();
-	}
-
-	@Override
-	protected void onStop()
-	{
-		super.onStop();
-		this.active = false;
-	}
-
-	public void refreshPeers()
-	{
-		peersTextView.setText(node.getLinks().size() + " connected");
-	}
+//	public void refreshPeers()
+//	{
+//		peersTextView.setText(node.getLinks().size() + " connected");
+//	}
 
 
 	@Override
@@ -157,11 +121,9 @@ public class MainActivity extends AppCompatActivity
 				break;
 
 			case R.id.refresh:
-				try {
-					node.requestChannelLists();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
+
+			    Node.requestChannelLists();
+
 				mSectionsPagerAdapter.notifyDataSetChanged();
 				break;
 
@@ -169,10 +131,10 @@ public class MainActivity extends AppCompatActivity
 				mDrawerLayout.openDrawer(GravityCompat.START);
 				return true;
 			case R.id.stop:
-				node.stop();
+				stopService(nodeIntent);
 				break;
 			case R.id.start:
-				node.start();
+				startService(nodeIntent);
 		}
 		//noinspection SimplifiableIfStatement
 
@@ -212,9 +174,15 @@ public class MainActivity extends AppCompatActivity
 			super.onCreate(savedInstanceState);
 			savedInstanceState = getArguments();
 			tabPosition = savedInstanceState.getInt(ARG_OBJECT);
+			EventBus.getDefault().register(this);
 
 		}
 
+		@Override
+		public void onDestroy() {
+			super.onDestroy();
+			EventBus.getDefault().unregister(this);
+		}
 
 		@Nullable
 		@Override
@@ -230,9 +198,9 @@ public class MainActivity extends AppCompatActivity
 			mRecyclerView.setHasFixedSize(true);
 			mLayoutManager = new LinearLayoutManager(this.getContext());
 			mRecyclerView.setLayoutManager(mLayoutManager);
-			mAdapter = new ChannelAdapter(tabPosition, new ChannelAdapter.OnItemClickListener() {
+			mAdapter = new ChannelAdapter( tabPosition, new ChannelAdapter.OnItemClickListener() {
 				@Override
-				public void onItemClick(String channel, int tabPosition) {
+				public void onItemClick(Channel channel, int tabPosition) {
 					switch (tabPosition) {
 						case 0:
 							Intent intent = new Intent(getActivity(), Messenger.class);
@@ -254,6 +222,7 @@ public class MainActivity extends AppCompatActivity
 			});
 
 			mRecyclerView.setAdapter(mAdapter);
+
 			return v;
 		}
 
@@ -262,6 +231,14 @@ public class MainActivity extends AppCompatActivity
 		public void onRefresh() {
 			updateData();
 		}
+
+		@Subscribe
+		public void onEventUpdate(Node node){
+			mAdapter.eventUpdate(node);
+			mAdapter.notifyDataSetChanged();
+			mSwipeRefreshLayout.setRefreshing(false);
+		}
+
 	}
 
 
@@ -274,7 +251,8 @@ public class MainActivity extends AppCompatActivity
 		private Vector<tabFragment> pages;
 
 
-		public tabPagerAdapter(FragmentManager fm) {
+
+		private tabPagerAdapter(FragmentManager fm) {
 			super(fm);
 			pages = new Vector<>();
 		}
@@ -296,11 +274,12 @@ public class MainActivity extends AppCompatActivity
 			return 3;
 		}
 
-		public void updateLists() {
-			for (tabFragment f : pages) {
-				f.updateData();
+		public void eventUpdate(Node node){
+			for(tabFragment p : pages){
+				p.mAdapter.eventUpdate(node);
 			}
 		}
+
 	}
 
 

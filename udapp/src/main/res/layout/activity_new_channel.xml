@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:maxHeight="500dp"
@@ -44,13 +45,26 @@
                 </android.support.design.widget.TextInputLayout>
 
                 <Switch
-                    android:id="@+id/private_channel_switch"
+                    android:id="@+id/privateChannelSwitch"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:textOff="public"
-                    android:textOn="private"
-                    />
+                    android:checked="false"
+                    android:text = "Requires Password"
+                    android:textColor="@color/greyed_out" />
+                <android.support.design.widget.TextInputLayout
+                    android:id="@+id/channelKeyInputLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:visibility="gone">
+
+                    <android.support.design.widget.TextInputEditText
+                        android:id="@+id/channelKeyEditText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Password"/>
+                </android.support.design.widget.TextInputLayout>
 
                 <CheckBox
                     android:id="@+id/checkBoxBluetooth"
@@ -92,12 +106,41 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:padding="16dp"
                     android:text="Advanced Options"
                     android:clickable="true"
                     android:layout_gravity="center_horizontal"/>
 
+                <RelativeLayout
+                    android:id="@+id/advancedOptionsLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:visibility="gone">
+
+                    <Switch
+                        android:id="@+id/switch1"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Switch" />
+
+                    <EditText
+                        android:id="@+id/editTextBlock"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@+id/switch1"/>
+
+                    <ToggleButton
+                        android:id="@+id/toggleButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="ToggleButton"
+                        android:layout_below="@+id/editTextBlock"/>
+
+                </RelativeLayout>
+
             </LinearLayout>
         </ScrollView>
+
 
 
 

@@ -4,89 +4,77 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.os.Build;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toolbar;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
+import java.util.Set;
 
+import io.underdark.app.model.Channel;
 import io.underdark.app.model.Node;
+import io.underdark.app.model.Transmission;
 
-import static io.underdark.app.MainActivity.node;
 
 public class Messenger extends AppCompatActivity {
 
     //todo oncreate and on resume should bring back messages
 
 
-    private static TextView conversationTextView;
+    private TextView conversationTextView;
     private EditText message;
     android.support.v7.widget.Toolbar toolbar;
     public static boolean active = false;
     private ArrayList <String> messageHist;
-    private String currentChannel = "";
+    private Channel currentChannel;
+    EventBus eventBus;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        EventBus.getDefault().register(this);
+
+
         setContentView(R.layout.activity_messenger);
         Intent intent = getIntent();
         toolbar = findViewById(R.id.messageViewToolbar);
         if (intent.hasExtra("currentChannel")) {
-            currentChannel = intent.getStringExtra("currentChannel");
-            toolbar.setTitle(currentChannel);
+            currentChannel =(Channel) intent.getSerializableExtra("currentChannel");
+            toolbar.setTitle(currentChannel.title);
 
         }
-        toolbar.setSubtitle("people: "+0);
+        toolbar.setSubtitle("listening: "+0);
 
-        conversationTextView = findViewById(R.id.tv_conversation_view);
+        conversationTextView = findViewById(R.id.conversation_text_view);
         message = findViewById(R.id.message);
 
         //todo: init message hist with diskcache message hist instead
-        messageHist = new ArrayList<>();
-        /*
-        for(m in messageHist){
-           message view += m
+        conversationTextView.setText("");
+        for(Transmission t: currentChannel.recentMessages){
+            conversationTextView.append(formatMessage(t.message,t.originName,t.time));
         }
-         */
-
-        LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver,
-                new IntentFilter("mesh_irc_transmission"));
     }
 
-    private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            // Get extra data included in the Intent
-            if (intent.hasExtra("message")) {
-                if (intent.hasExtra("channelTo")) {
-                    Bundle E = intent.getExtras();
-                    if (E.getString("channelTo").contentEquals(currentChannel) &&
-                            !E.getString("channelTo").contentEquals("")) {
-                        String message = E.getString("message");
-                        String user = E.getString("user");
-                        String time = E.getString("time");
-                        String formattedMessage = formatMessage(message, user, time);
-                        //messageHist.add(formattedMessage);
-                        conversationTextView.append(formattedMessage);
 
-                        Log.e("receiver", "Got message: " + message);
-                    }
-                }
-            }
+    @Subscribe
+    public void onMessageEvent(Transmission t){
+        if(t.channelTo.equals(currentChannel)){
+            conversationTextView.append(formatMessage(t.message,t.originName,t.time));
         }
-    };
+    }
+
+
 
     @Override
     protected void onStart() {
@@ -114,10 +102,10 @@ public class Messenger extends AppCompatActivity {
         message.getText().clear();
         if(m.contentEquals(""))return;
 
-        conversationTextView.append(formatMessage(m,node.username,node.getTime()));
+        conversationTextView.append(formatMessage(m,Node.username,Node.getTime()));
 
         try {
-            node.sendChannelMessage(currentChannel, m);
+            Node.sendChannelMessage(currentChannel, m);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -144,9 +132,10 @@ public class Messenger extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         // Unregister since the activity is about to be closed.
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
+        EventBus.getDefault().unregister(this);
         super.onDestroy();
     }
+
 
 
 }
