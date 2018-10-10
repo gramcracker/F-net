@@ -34,19 +34,20 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_toLeftOf="@+id/list_image_button"
-                android:layout_toRightOf="@+id/listening_count"
+                android:layout_toRightOf="@+id/listening_count_layout"
                 android:layout_gravity="center_horizontal|center_vertical"
                 />
             <TextView
+                android:id="@+id/poster_text_view"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textColor="@color/color_text_primary"
                 android:textSize="15sp"
                 android:layout_below="@id/list_card_title"
-                android:layout_toRightOf="@+id/listening_count"
+                android:layout_toRightOf="@+id/listening_count_layout"
                 android:text="Poster:"/>
             <FrameLayout
-                android:id="@+id/listening_count"
+                android:id="@+id/listening_count_layout"
                 android:layout_alignParentLeft="true"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"

@@ -6,7 +6,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 
 public class Transmission implements Serializable {
-    int color = Color.WHITE;
+    public int color = Color.WHITE;
     public String time = "";
     public Channel channelTo;
     public String message = "";
@@ -15,7 +15,7 @@ public class Transmission implements Serializable {
     public long nodeFrom;
     public long nodeTo;
 
-    public enum Type { none, messagesSync, channelsListRequest, channelList, messageList, channelMessage, newChannel, privateMessage  }
+    public enum Type { none, messagesSync, channelsListRequest, channelList, messageList, channelMessage, newChannel, requestUnlock, acceptUnlock, privateMessage  }
     Type type = Type.none;
 
     ArrayList<String> listData;

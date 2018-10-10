@@ -13,7 +13,7 @@ android {
     }
 
     compileSdkVersion 27
-    buildToolsVersion '27.0.3'
+    buildToolsVersion '28.0.2'
 
     defaultConfig {
         applicationId "io.underdark.app"
@@ -44,7 +44,7 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     //implementation(name:'underdark-release', ext:'aar')
     implementation 'com.android.support:appcompat-v7:27.1.1'
-    implementation 'io.underdark:underdark:1.+'
+    implementation 'io.underdark:underdark:1.0.12'
     implementation 'org.slf4j:slf4j-api:1.7.21'
     implementation 'com.android.support:design:27.1.1'
     implementation 'com.android.support.constraint:constraint-layout:1.1.2'

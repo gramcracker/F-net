@@ -1,10 +1,10 @@
 package io.underdark.app;
-import android.content.BroadcastReceiver;
-import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.design.widget.NavigationView;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -25,14 +25,25 @@ import android.support.v4.view.ViewPager;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import com.flask.colorpicker.ColorPickerView;
+import com.flask.colorpicker.OnColorSelectedListener;
+import com.flask.colorpicker.builder.ColorPickerClickListener;
+import com.flask.colorpicker.builder.ColorPickerDialogBuilder;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
+import java.util.Set;
 import java.util.Vector;
 
+import io.underdark.app.dialogs.NewChannelDialog;
 import io.underdark.app.model.Channel;
 import io.underdark.app.model.Node;
+import io.underdark.app.dialogs.UsernameDialog;
+import io.underdark.transport.Link;
 
 
 public class MainActivity extends AppCompatActivity
@@ -46,6 +57,8 @@ public class MainActivity extends AppCompatActivity
 
 	public tabPagerAdapter mSectionsPagerAdapter;
 	ViewPager mViewPager;
+
+	NavigationView navigationView;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
@@ -67,6 +80,7 @@ public class MainActivity extends AppCompatActivity
 		actionbar.setDisplayHomeAsUpEnabled(true);
 		actionbar.setHomeAsUpIndicator(R.drawable.ic_menu);
 
+		EventBus.getDefault().register(this);
 
 		//VIEW PAGER-------
 
@@ -84,6 +98,26 @@ public class MainActivity extends AppCompatActivity
 		mViewPager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
 		tabLayout.addOnTabSelectedListener(new TabLayout.ViewPagerOnTabSelectedListener(mViewPager));
 
+		navigationView = (NavigationView) findViewById(R.id.nav_view);
+		navigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
+			@Override
+			public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+				int id = item.getItemId();
+				switch (id){
+					case R.id.username:
+						UsernameDialog usernameDialog = UsernameDialog.getInstance(MainActivity.this);
+						if(!usernameDialog.isShowing()){
+							usernameDialog.show();
+						}
+						break;
+					case R.id.textColor:
+						pickColor();
+
+				}
+				return false;
+			}
+		});
+
 
         nodeIntent = new Intent(this, Node.class);
         startService(nodeIntent);
@@ -93,10 +127,11 @@ public class MainActivity extends AppCompatActivity
 
 
 
-//	public void refreshPeers()
-//	{
-//		peersTextView.setText(node.getLinks().size() + " connected");
-//	}
+	@Subscribe(threadMode = ThreadMode.MAIN)
+	public void refreshPeers(Set<Link> links)
+	{
+		peersTextView.setText(links.size() + " connected");
+	}
 
 
 	@Override
@@ -163,6 +198,7 @@ public class MainActivity extends AppCompatActivity
 
 
 
+
 		public void updateData(){
 			mAdapter.retrieveData();
 			mAdapter.notifyDataSetChanged();
@@ -174,13 +210,13 @@ public class MainActivity extends AppCompatActivity
 			super.onCreate(savedInstanceState);
 			savedInstanceState = getArguments();
 			tabPosition = savedInstanceState.getInt(ARG_OBJECT);
-			EventBus.getDefault().register(this);
 
 		}
 
 		@Override
 		public void onDestroy() {
 			super.onDestroy();
+
 			EventBus.getDefault().unregister(this);
 		}
 
@@ -206,6 +242,7 @@ public class MainActivity extends AppCompatActivity
 							Intent intent = new Intent(getActivity(), Messenger.class);
 							intent.putExtra("currentChannel", channel);
 							getActivity().startActivity(intent);
+
 							break;
 						case 1:
 							//todo: display channel information probably
@@ -232,13 +269,24 @@ public class MainActivity extends AppCompatActivity
 			updateData();
 		}
 
+
 		@Subscribe
-		public void onEventUpdate(Node node){
-			mAdapter.eventUpdate(node);
+		public void onEventChannels(Set<Channel> channels) {
+			Toast.makeText(this.getContext(),"new chnnels!", Toast.LENGTH_LONG).show();
+			if (channels.equals(Node.channelsListeningTo)) {
+				mAdapter.setChannelsListening(channels);
+			}else if(channels.equals(Node.channelsVisible)){
+				mAdapter.setChannelsVisible(channels);
+			}
 			mAdapter.notifyDataSetChanged();
-			mSwipeRefreshLayout.setRefreshing(false);
 		}
 
+		@Subscribe
+		public void onEventPeople(Set<Link> links){
+			mAdapter.setPeople(links);
+			mAdapter.notifyDataSetChanged();
+
+		}
 	}
 
 
@@ -280,6 +328,34 @@ public class MainActivity extends AppCompatActivity
 			}
 		}
 
+	}
+
+	public void pickColor(){
+		ColorPickerDialogBuilder
+				.with(this)
+				.setTitle("Choose color")
+				.initialColor(Node.textColor)
+				.wheelType(ColorPickerView.WHEEL_TYPE.FLOWER)
+				.density(12)
+				.setOnColorSelectedListener(new OnColorSelectedListener() {
+					@Override
+					public void onColorSelected(int selectedColor) {
+
+					}
+				})
+				.setPositiveButton("ok", new ColorPickerClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int selectedColor, Integer[] allColors) {
+						Node.textColor = selectedColor;
+					}
+				})
+				.setNegativeButton("cancel", new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+					}
+				})
+				.build()
+				.show();
 	}
 
 

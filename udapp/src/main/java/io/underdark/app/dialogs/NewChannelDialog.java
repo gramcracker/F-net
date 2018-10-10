@@ -1,11 +1,10 @@
-package io.underdark.app;
+package io.underdark.app.dialogs;
 
 import android.app.Dialog;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.support.annotation.NonNull;
-import android.support.design.widget.TextInputEditText;
 import android.support.design.widget.TextInputLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -20,6 +19,7 @@ import android.widget.Toast;
 
 import java.io.IOException;
 
+import io.underdark.app.R;
 import io.underdark.app.model.Channel;
 import io.underdark.app.model.Node;
 

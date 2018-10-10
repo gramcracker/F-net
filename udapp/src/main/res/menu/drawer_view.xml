@@ -5,6 +5,12 @@
 
     </group>
     <item
-        android:id="@+id/app_bar_switch"
-        android:title="Switch" />
+        android:id="@+id/username"
+        android:title="Username"
+        android:icon="@drawable/ic_user"
+        />
+    <item
+        android:id="@+id/textColor"
+        android:title="Text Color"
+        android:icon="@drawable/ic_color_picker"/>
 </menu>

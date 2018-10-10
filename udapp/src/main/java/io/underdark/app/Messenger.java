@@ -7,9 +7,12 @@ import android.content.IntentFilter;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.Spannable;
+import android.text.style.ForegroundColorSpan;
 import android.view.Menu;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import org.greenrobot.eventbus.EventBus;
@@ -27,11 +30,9 @@ import io.underdark.app.model.Transmission;
 
 public class Messenger extends AppCompatActivity {
 
-    //todo oncreate and on resume should bring back messages
-
-
     private TextView conversationTextView;
     private EditText message;
+    private ScrollView scrollView;
     android.support.v7.widget.Toolbar toolbar;
     public static boolean active = false;
     private ArrayList <String> messageHist;
@@ -54,15 +55,14 @@ public class Messenger extends AppCompatActivity {
             toolbar.setTitle(currentChannel.title);
 
         }
-        toolbar.setSubtitle("listening: "+0);
+        toolbar.setSubtitle("listening: "+ currentChannel.usersListening.size());
 
         conversationTextView = findViewById(R.id.conversation_text_view);
         message = findViewById(R.id.message);
-
-        //todo: init message hist with diskcache message hist instead
+        scrollView = findViewById(R.id.messageScrollView);
         conversationTextView.setText("");
         for(Transmission t: currentChannel.recentMessages){
-            conversationTextView.append(formatMessage(t.message,t.originName,t.time));
+            appendMessage(t);
         }
     }
 
@@ -70,7 +70,8 @@ public class Messenger extends AppCompatActivity {
     @Subscribe
     public void onMessageEvent(Transmission t){
         if(t.channelTo.equals(currentChannel)){
-            conversationTextView.append(formatMessage(t.message,t.originName,t.time));
+            appendMessage(t);
+
         }
     }
 
@@ -102,7 +103,8 @@ public class Messenger extends AppCompatActivity {
         message.getText().clear();
         if(m.contentEquals(""))return;
 
-        conversationTextView.append(formatMessage(m,Node.username,Node.getTime()));
+        //conversationTextView.append(formatMessage(m,Node.username,Node.getTime()));
+        appendMessage(m);
 
         try {
             Node.sendChannelMessage(currentChannel, m);
@@ -122,7 +124,6 @@ public class Messenger extends AppCompatActivity {
 
     public String formatMessage(String message, String user, String time){
 
-        //todo: change to get date from transmission object
         String m = time+" "
                 +user+": "
                 +message+"\n";
@@ -136,7 +137,24 @@ public class Messenger extends AppCompatActivity {
         super.onDestroy();
     }
 
+    public static void appendColoredText(TextView tv, String text, int color) {
+        int start = tv.getText().length();
+        tv.append(text);
+        int end = tv.getText().length();
 
+        Spannable spannableText = (Spannable) tv.getText();
+        spannableText.setSpan(new ForegroundColorSpan(color), start, end, 0);
+    }
+
+    public void appendMessage( String message){
+        appendColoredText(conversationTextView,formatMessage(message,Node.username,Node.getTime()), Node.textColor);
+        scrollView.fullScroll(scrollView.FOCUS_DOWN);
+    }
+    public void appendMessage(Transmission t){
+        appendColoredText(conversationTextView, formatMessage(t.message,t.originName,t.time), t.color);
+        scrollView.fullScroll(scrollView.FOCUS_DOWN);
+
+    }
 
 }
 

@@ -1,6 +1,8 @@
 package io.underdark.app.model;
 
 import android.app.Activity;
+import android.app.Notification;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -10,7 +12,10 @@ import android.graphics.Color;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 
+import android.support.v4.app.NotificationCompat;
 import android.util.Log;
+import android.widget.RemoteViews;
+import android.widget.Toast;
 
 
 import com.google.gson.Gson;
@@ -38,6 +43,8 @@ import java.util.Random;
 import java.util.Set;
 
 import io.underdark.Underdark;
+import io.underdark.app.MainActivity;
+import io.underdark.app.R;
 import io.underdark.transport.Link;
 import io.underdark.transport.Transport;
 import io.underdark.transport.TransportKind;
@@ -46,6 +53,7 @@ import io.underdark.util.nslogger.NSLogger;
 import io.underdark.util.nslogger.NSLoggerAdapter;
 
 import static android.support.constraint.Constraints.TAG;
+import static io.underdark.app.dialogs.NodeServiceNotification.CHANNEL_ID;
 
 
 public class Node extends Service implements TransportListener
@@ -55,7 +63,7 @@ public class Node extends Service implements TransportListener
 	static EventBus eventBus;
 	SharedPreferences preferences;
 	private boolean running;
-	private static long nodeId;
+	public static long nodeId;
 	private Transport transport;
 	public static String username;
 
@@ -63,11 +71,19 @@ public class Node extends Service implements TransportListener
 	public static Set<Channel> channelsVisible;
 	public static Set<Channel> channelsBroadcasting;
 	public static Set<Link> links;
-	static int textColor = Color.WHITE;
+	public static int textColor = Color.WHITE;
 
 
+	@Override
+	public boolean equals(Object obj) {
+		if(obj.getClass()!=Node.class)return false;
+		Node n = (Node)obj;
+		boolean isEqual = false;
+		if(n.nodeId == this.nodeId &&
+				n.username.contentEquals(this.username)) isEqual = true;
 
-
+		return isEqual;
+	}
 
 	//-----------------------------------------------
 	@Nullable
@@ -81,6 +97,8 @@ public class Node extends Service implements TransportListener
 	public void onCreate() {
 		//set up cache for messages
 		//sets up the channels from saved channels
+		eventBus = EventBus.getDefault();
+
 		getCachedData();
 
 		channelsVisible = new HashSet<>();
@@ -110,6 +128,24 @@ public class Node extends Service implements TransportListener
 				kinds
 		);
 
+		Intent notificationIntent = new Intent(this, MainActivity.class);
+		notificationIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+		notificationIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+		PendingIntent pendingIntent = PendingIntent.getActivity(this,
+				0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+		Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+				.setContentIntent(pendingIntent)
+				.setContent( new RemoteViews(this.getPackageName(), R.layout.service_notification))
+				.build();
+
+		startForeground(1, notification);
+
+		//do heavy work on a background thread
+		//stopSelf();
+
+
+
 		requestChannelLists();
 	}
 
@@ -123,9 +159,9 @@ public class Node extends Service implements TransportListener
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		start();
-		return super.onStartCommand(intent, flags, startId);
+		//return super.onStartCommand(intent, flags, startId);
+		return START_NOT_STICKY;
 	}
-
 
 
 
@@ -166,16 +202,12 @@ public class Node extends Service implements TransportListener
 	}
 
 
-	//todo: probably change this
-	//region TransportListener
-	@Override
-	public void transportNeedsActivity(Transport transport, ActivityCallback callback)
-	{
-		callback.accept((Activity) getApplication().getApplicationContext());
-	}
+    @Override
+    public void transportNeedsActivity(Transport transport, ActivityCallback activityCallback) {
 
+    }
 
-	@Override
+    @Override
 	public void transportLinkConnected(Transport transport, Link link)
 	{
 		if (!links.contains(link)){
@@ -185,7 +217,7 @@ public class Node extends Service implements TransportListener
 			links.add(link);
 		}
 
-		eventBus.post(this);
+		eventBus.post(links);
 
 		requestChannelLists(link);
 
@@ -198,7 +230,7 @@ public class Node extends Service implements TransportListener
 			links.remove(link);
 		}
 
-		eventBus.post(this);
+		eventBus.post(links);
 
 	}
 
@@ -265,12 +297,34 @@ public class Node extends Service implements TransportListener
 					//add messages to view
 					if(transmission.nodeTo == nodeId){
 						channelsVisible.addAll(transmission.channelList);
-						eventBus.removeStickyEvent(channelsVisible);
-						eventBus.post(this);
+						eventBus.post(channelsVisible);
 					}
+					break;
+				case requestUnlock:
+                    for(Channel c : channelsBroadcasting){
+						if(transmission.channelTo.key.contentEquals(c.key)) {
+							Transmission response = new Transmission(Transmission.Type.acceptUnlock);
+							response.channelTo = c;
+							response.nodeFrom = nodeId;
+							response.nodeTo = transmission.nodeFrom;
+							Link l = getLink(transmission.nodeFrom);
+							if (l!=null){
+								sendPrivateTransmission(response, l);
+							}
+							break;
+						}
 
+					}
+				case acceptUnlock:
+                    Toast.makeText(this.getApplicationContext(),"channel unlocked", Toast.LENGTH_LONG).show();
+
+                    addListening(transmission.channelTo);
 
 					break;
+
+				case newChannel:
+					channelsVisible.add(transmission.broadcastingChannel);
+					eventBus.post(channelsVisible);
 
 			}
 
@@ -322,7 +376,7 @@ public class Node extends Service implements TransportListener
 		sendPrivateTransmission( t, link);
 	}
 
-	private void sendPrivateTransmission(Transmission t, Link link){
+	private static void sendPrivateTransmission(Transmission t, Link link){
 		try {
 			link.sendFrame(serialize(t));
 		} catch (IOException e) {
@@ -341,6 +395,11 @@ public class Node extends Service implements TransportListener
 		t.originName = username;
 		t.channelTo = channel_to;
 		t.time =getTime();
+		for(Channel c: channelsListeningTo){
+			if (c.equals(channel_to)){
+				c.recentMessages.add(t);
+			}
+		}
 		broadcastBytes(serialize(t));
 	}
 
@@ -362,24 +421,30 @@ public class Node extends Service implements TransportListener
 
 	}
 
+	public static Link getLink(long node){
+		for(Link l: links){
+			if (l.getNodeId() == node){
+				return l;
+			}
+		}
+		return null;
+	}
+
 
 	public void sendChannelList(long nodeTo) {
-		if(!channelsBroadcasting.isEmpty()){
+		if(!channelsBroadcasting.isEmpty()) {
 			Transmission t = new Transmission(Transmission.Type.channelList);
 			t.nodeTo = nodeTo;
 			t.channelList.addAll(channelsBroadcasting);
-			for(Link l: links){
-				if (l.getNodeId() == nodeTo){
-					try {
-						l.sendFrame(serialize(t));
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
+			Link l = getLink(nodeTo);
+			if (l != null) {
+				try {
+					l.sendFrame(serialize(t));
+				} catch (IOException e) {
+					e.printStackTrace();
 				}
 			}
 		}
-
-
 	}
 
 	public static void broadcastNewChannel(Channel channel) throws IOException {
@@ -395,18 +460,24 @@ public class Node extends Service implements TransportListener
 		//add channel to channels listening to.
 		//send channel list
 		if(channelsListeningTo.contains(channel)||channel == null) return;
-		channelsListeningTo.add(channel);
+		channel.posterId = nodeId;
+		channel.poster = username;
+		addListening(channel);
 		broadcastNewChannel(channel);
+
 
 	}
 
-	public static void setListening(Channel channel){
+	public static void addListening(Channel channel){
+		channel.usersListening.add(username);
 		channelsListeningTo.add(channel);
+		eventBus.post(channelsListeningTo);
 	}
 
 	public static void removeChannel(Channel channel){
 		if(channelsListeningTo.contains(channel)) channelsListeningTo.remove(channel);
 		if(channelsBroadcasting.contains((channel))) channelsBroadcasting.remove((channel));
+		eventBus.post(channelsVisible);
 
 	}
 
@@ -442,9 +513,17 @@ public class Node extends Service implements TransportListener
 
     }
 
+	public static void unlock(Channel channel) {
+		Link link = getLink(channel.posterId);
+		if(link!= null){
+			Transmission t = new Transmission(Transmission.Type.requestUnlock);
+			t.channelTo = channel;
+			t.nodeFrom = nodeId;
+			t.nodeTo = channel.posterId;
+			sendPrivateTransmission(t, link);
+		}
 
-
-
+	}
 
 
 	//endregion
